@@ -86,6 +86,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
+    // 1. Initialize Supabase (Replace with your actual keys)
+    const _supabase = supabase.createClient(
+    'https://eakrupdntveyoworript.supabase.co', 
+    'sb_publishable_pS4K_2Y71HECq0ewWcAekg_PiuF771G'
+    );
     let map, drawnItems, isAdmin = false;
     const history = [];
 
@@ -161,27 +166,44 @@ setTimeout(() => { map.invalidateSize(); }, 200);;
     };
 
     // Data Systems
-    window.saveToBrowser = () => { localStorage.setItem('apoc_save_v4', JSON.stringify(drawnItems.toGeoJSON())); alert("Browser Cache Updated."); };
-    window.exportData = () => { navigator.clipboard.writeText(JSON.stringify(drawnItems.toGeoJSON())); alert("Backup String Copied to Clipboard."); };
-    window.importData = () => { 
-        const str = document.getElementById('import-area').value; 
-        if (str) { 
-            const json = JSON.parse(str);
-            L.geoJSON(json, {
-                onEachFeature: (f, l) => {
-                    l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`);
-                    l.addTo(drawnItems);
+    // NEW: Global Cloud Save
+async function saveToCloud() {
+    const data = drawnItems.toGeoJSON();
+    const { error } = await _supabase
+        .from('map_data')
+        .update({ geojson_data: data })
+        .eq('id', 1);
+
+    if (error) {
+        console.error(error);
+        alert("COMMAND ERROR: Satellite Uplink Failed.");
+    } else {
+        alert("SIGNAL SECURED: Cloud Database Updated.");
+    }
+}
+
+// NEW: Global Cloud Load
+async function loadFromCloud() {
+    const { data, error } = await _supabase
+        .from('map_data')
+        .select('geojson_data')
+        .eq('id', 1)
+        .single();
+
+    if (error) {
+        console.error(error);
+    } else if (data && data.geojson_data) {
+        // Clear current map before loading
+        drawnItems.clearLayers();
+        L.geoJSON(data.geojson_data, {
+            onEachFeature: (f, l) => {
+                l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`);
+                l.addTo(drawnItems);
                 }
             });
-            alert("External Data Injected.");
-        } 
-    };
-    function loadFromBrowser() {
-        const saved = localStorage.getItem('apoc_save_v4');
-        if (saved) {
-            L.geoJSON(JSON.parse(saved), { onEachFeature: (f, l) => { l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`); l.addTo(drawnItems); } });
         }
     }
+
 
     // SINGLE RE-SIZING LOGIC BLOCK
 const resizer = document.getElementById('resizer');
