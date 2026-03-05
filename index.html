@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Collaborative France Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; border-radius: 8px; }
+        .controls { margin-bottom: 10px; font-family: sans-serif; }
+        .admin-only { display: none; background: #ffe6e6; padding: 5px; border: 1px solid red; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <h2>Map of France: Annotations & Suggestions</h2>
+    <button onclick="toggleAdmin()">Toggle Admin Mode (Edit Access)</button>
+    <span id="status">Status: <b>Viewer (Suggestion Mode)</b></span>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize map centered on France
+    const map = L.map('map').setView([46.2276, 2.2137], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let isAdmin = false;
+
+    // Function to toggle Admin mode
+    function toggleAdmin() {
+        const password = prompt("Enter Admin Password to Edit:");
+        if (password === "france2026") { // Simple placeholder password
+            isAdmin = true;
+            document.getElementById('status').innerHTML = "Status: <b style='color:red'>ADMIN (Edit Mode)</b>";
+            alert("Admin access granted. You can now delete markers.");
+        } else {
+            alert("Wrong password. Suggestions only.");
+        }
+    }
+
+    // Handle clicks for suggestions or edits
+    map.on('click', function(e) {
+        const note = prompt(isAdmin ? "Add Official Annotation:" : "Leave a Suggestion:");
+        if (note) {
+            const marker = L.marker(e.latlng).addTo(map);
+            const prefix = isAdmin ? "<b>OFFICIAL:</b> " : "<i>SUGGESTION:</i> ";
+            
+            marker.bindPopup(`${prefix}${note}<br>${isAdmin ? '<button onclick="removeMarker(this)">Delete</button>' : ''}`).openPopup();
+        }
+    });
+
+    function removeMarker(btn) {
+        if(isAdmin) {
+            map.removeLayer(btn.closest('.leaflet-marker-icon') || /* logic to find layer */ alert("Use Admin tools to clear markers"));
+        }
+    }
+</script>
+</body>
+</html>
