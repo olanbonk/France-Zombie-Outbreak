@@ -106,16 +106,30 @@
     const history = [];
 
     window.onload = function() {
-        // Core Map Setup
+        // 1. TOP BUN: The Coordinates (France)
         map = L.map('map').setView([46.2276, 2.2137], 6);
 
-        // Bright, Clear Political Map (Original Version)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+        // 2. THE FILLING: The Map Visuals
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. THE EXTRAS: Drawing Tools
+        drawnItems = new L.FeatureGroup().addTo(map);
+        const drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems },
+            draw: { circle: false, circlemarker: false, rectangle: true }
+        });
+
+        // 4. BOTTOM BUN: The Cloud Auto-Loader
         setTimeout(() => { 
-        loadFromCloud(); 
-    }, 500); // Gives the database 0.5 seconds to wake up
-    }).addTo(map);
+            if (typeof loadFromCloud === 'function') {
+                loadFromCloud(); 
+            }
+        }, 500); 
+
+        // Initial Map Fix
+        setTimeout(() => { map.invalidateSize(); }, 200);
 
 // This ensures the map fills the space correctly after loading
 setTimeout(() => { map.invalidateSize(); }, 200);;
