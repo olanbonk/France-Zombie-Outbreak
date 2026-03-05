@@ -33,11 +33,8 @@
 </div>
 
 <div id="map"></div>
-<div id="resizer"></div> <div class="dashboard" id="dashboard">
-
-<div id="map"></div>
-
-<div class="dashboard">
+<div id="resizer"></div> 
+<div class="dashboard" id="dashboard">
     <div class="tool-box admin-only">
         <h3>1. Geometry Config</h3>
         <label>Polygon Zone Type:</label>
@@ -205,10 +202,7 @@ function handleMouseMove(e) {
     const newHeight = window.innerHeight - e.clientY;
     if (newHeight > 50 && newHeight < window.innerHeight * 0.9) {
         dashboard.style.height = newHeight + 'px';
-        // Forces map to render pins/zones in the new space
         if (map) { map.invalidateSize(); }
-    }
-}
     }
 }
 </script>
