@@ -1,53 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>France Zombie Apocalypse Map</title>
+    <title>France Apocalypse: Nuclear Command</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; }
-        #map { height: 75vh; width: 100%; border-bottom: 3px solid #333; background: #222; }
-        .dashboard { padding: 20px; display: flex; gap: 20px; background: #1a1a1a; flex-wrap: wrap; }
-        .tool-box { border: 1px solid #444; padding: 15px; border-radius: 8px; background: #252525; min-width: 250px; flex: 1; }
-        h3 { margin-top: 0; color: #ff4444; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
-        button { cursor: pointer; background: #3d3d3d; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; transition: 0.2s; }
-        button:hover { background: #505050; border-color: #888; }
-        select { background: #333; color: white; padding: 5px; border: 1px solid #555; }
-        .admin-only { display: none; }
-        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 5px; border: 1px solid #444; }
-        #pending-list { list-style: none; padding: 0; margin-top: 10px; }
-        .pending-item { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; overflow: hidden; }
+        #map { height: 75vh; width: 100%; border-bottom: 3px solid #ff4444; background: #1a1a1a; }
+        .dashboard { height: 25vh; padding: 15px; display: flex; gap: 15px; background: #111; overflow-y: auto; }
+        .tool-box { border: 1px solid #333; padding: 12px; border-radius: 4px; background: #1a1a1a; min-width: 220px; flex: 1; }
+        h3 { margin: 0 0 10px 0; color: #ff4444; font-size: 0.8em; text-transform: uppercase; border-bottom: 1px solid #333; }
+        button { cursor: pointer; background: #222; color: #ccc; border: 1px solid #444; padding: 6px 10px; margin: 2px; border-radius: 3px; font-size: 0.8em; }
+        button:hover { background: #333; color: white; border-color: #ff4444; }
+        select, input { background: #222; color: white; border: 1px solid #444; padding: 4px; font-size: 0.8em; }
+        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #ff4444; }
+        .pending-item { background: #222; padding: 5px; margin-bottom: 4px; display: flex; justify-content: space-between; font-size: 0.75em; border-left: 3px solid orange; }
     </style>
 </head>
 <body>
 
 <div class="status-bar">
-    <span id="user-type" style="color: #aaa; font-weight: bold;">MODE: VIEWER</span> 
-    <button onclick="login()" style="margin-left:10px;">Admin Login</button>
+    <span id="user-type" style="color: #666;">ACCESS: RESTRICTED</span> 
+    <button onclick="login()">Enter Command Code</button>
 </div>
 
 <div id="map"></div>
 
 <div class="dashboard">
-    <div class="tool-box admin-only" id="admin-tools">
-        <h3>Admin Command Center</h3>
-        <div style="margin-bottom: 10px;">
-            <label>Active Pen Tool: </label>
-            <select id="zone-color">
-                <option value="black">Ruin (Black)</option>
-                <option value="purple">Infected (Purple)</option>
-                <option value="red">Danger (Red)</option>
-                <option value="blue">Route/Safe (Blue)</option>
-            </select>
+    <div class="tool-box admin-only" style="display:none;">
+        <h3>Zone / Route Architect</h3>
+        <select id="active-type">
+            <option value="black">Ruin (Polygon)</option>
+            <option value="purple">Infected (Polygon)</option>
+            <option value="yellow">Quarantine (Polygon)</option>
+            <option value="cyan">Supply Route (Line)</option>
+            <option value="red">Frontline (Line)</option>
+        </select>
+        <div style="margin-top:10px;">
+            <button onclick="saveToBrowser()">💾 Save Locally</button>
+            <button onclick="exportData()">📋 Copy Data String</button>
+            <p style="font-size: 0.7em; color: #777;">Ctrl+Z to undo last draw</p>
         </div>
-        <button onclick="saveData()">Save Progress (Local)</button>
-        <button onclick="loadData()">Load Last Save</button>
+    </div>
+
+    <div class="tool-box admin-only" style="display:none;">
+        <h3>Marker Intel</h3>
+        <select id="marker-icon">
+            <option value="📍">Default Pin</option>
+            <option value="🏠">Outpost/Building</option>
+            <option value="🚁">Helipad/Airport</option>
+            <option value="⚓">Port/Dock</option>
+            <option value="☢️">Nuclear Site</option>
+            <option value="🏥">Medical Center</option>
+        </select>
     </div>
 
     <div class="tool-box">
-        <h3>Intel Suggestions</h3>
-        <div id="pending-list"><i>No data incoming...</i></div>
+        <h3>Incoming Intel (Suggestions)</h3>
+        <div id="pending-list">Waiting for field reports...</div>
     </div>
 </div>
 
@@ -55,121 +65,136 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-    // --- FIX FOR DISAPPEARING MARKER ICONS ---
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
-
-    // Initialize Map
     const map = L.map('map').setView([46.2276, 2.2137], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/hot/{z}/{x}/{y}.png').addTo(map);
 
     let isAdmin = false;
     const drawnItems = new L.FeatureGroup().addTo(map);
-    const pendingLayers = {}; // Store suggestions by ID
+    const history = []; // For Ctrl+Z
+    const pendingLayers = {};
 
-    // Admin Toolbar Config
     const drawControl = new L.Control.Draw({
         edit: { featureGroup: drawnItems },
-        draw: { 
-            polygon: { shapeOptions: { color: 'black', fillOpacity: 0.5 } }, 
-            polyline: { shapeOptions: { color: 'blue' } }, 
-            rectangle: true, 
-            circle: false, 
-            marker: true 
-        }
+        draw: { circle: false, circlemarker: false }
     });
 
     function login() {
-        const pw = prompt("Enter Admin Access Code:");
-        if(pw === "france2026") {
+        if(prompt("Enter Admin Access Code:") === "iloveusingnuclearweapons") {
             isAdmin = true;
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-            document.getElementById('user-type').innerText = "MODE: ADMIN";
+            document.getElementById('user-type').innerText = "ACCESS: ADMIN";
             document.getElementById('user-type').style.color = "#ff4444";
             map.addControl(drawControl);
-            alert("Admin Access Granted. Drawing Tools Enabled.");
-        } else {
-            alert("Unauthorized access.");
+            loadFromBrowser();
         }
     }
 
-    // Handle when something is drawn
+    // --- ICON HANDLING ---
+    function getCustomIcon(emoji) {
+        return L.divIcon({
+            html: `<div style="font-size:24px; filter: drop-shadow(0 0 2px black);">${emoji}</div>`,
+            className: 'custom-emoji-icon',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+    }
+
+    // --- DRAWING LOGIC ---
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
         const type = e.layerType;
-        const label = prompt("Enter Label Name:");
-        
-        if (!label) return;
+        const name = prompt("Enter Name for this Area/Marker:");
+        if (!name) return;
 
         if (isAdmin) {
-            const selectedColor = document.getElementById('zone-color').value;
-            if (layer.setStyle) {
-                layer.setStyle({ color: selectedColor, fillColor: selectedColor });
-            }
-            layer.bindPopup(`<b>${label}</b>`).addTo(drawnItems);
+            processAdminLayer(layer, type, name);
         } else {
-            // Suggestion Logic
-            const id = Date.now();
-            pendingLayers[id] = layer;
-            layer.setStyle({ color: 'orange', dashArray: '5, 5' });
-            layer.bindPopup(`<i>Suggestion: ${label}</i>`).addTo(map);
-            
-            const list = document.getElementById('pending-list');
-            if(list.innerText.includes("No data")) list.innerHTML = "";
-            
-            const item = document.createElement('div');
-            item.className = "pending-item";
-            item.id = "li-" + id;
-            item.innerHTML = `<span>${label}</span> <div>
-                <button onclick="approve(${id}, '${label}')" style="color:#0f0">✓</button>
-                <button onclick="reject(${id})" style="color:#f00">X</button></div>`;
-            list.appendChild(item);
+            processSuggestion(layer, name);
         }
     });
 
-    function approve(id, label) {
-        if (!isAdmin) return alert("Login as admin first");
-        const layer = pendingLayers[id];
-        const color = document.getElementById('zone-color').value;
-        if (layer.setStyle) layer.setStyle({ color: color, dashArray: null, fillOpacity: 0.5 });
-        layer.bindPopup(`<b>${label}</b>`);
-        layer.addTo(drawnItems);
-        document.getElementById("li-"+id).remove();
+    function processAdminLayer(layer, type, name) {
+        const color = document.getElementById('active-type').value;
+        const emoji = document.getElementById('marker-icon').value;
+
+        if (type === 'marker') {
+            layer.setIcon(getCustomIcon(emoji));
+        } else if (layer.setStyle) {
+            layer.setStyle({ color: color, fillColor: color, weight: type === 'polyline' ? 4 : 2 });
+        }
+
+        layer.bindPopup(generatePopupHTML(name, true)).addTo(drawnItems);
+        history.push(layer);
     }
 
-    function reject(id) {
+    function generatePopupHTML(name, isPerm) {
+        return `<div>
+            <b id="pop-name">${name}</b><br>
+            ${isPerm ? `<button onclick="renameLayer(this)">Rename</button>` : ''}
+        </div>`;
+    }
+
+    window.renameLayer = function(btn) {
+        const newName = prompt("New name:");
+        if (newName) btn.parentElement.querySelector('b').innerText = newName;
+    };
+
+    // --- CTRL + Z ---
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'z' && history.length > 0) {
+            const last = history.pop();
+            drawnItems.removeLayer(last);
+        }
+    });
+
+    // --- SUGGESTIONS ---
+    function processSuggestion(layer, name) {
+        const id = Date.now();
+        pendingLayers[id] = layer;
+        layer.setStyle({ color: 'orange', dashArray: '5,5' }).addTo(map);
+        
+        const list = document.getElementById('pending-list');
+        if (list.innerHTML.includes("Waiting")) list.innerHTML = "";
+        const item = document.createElement('div');
+        item.className = "pending-item";
+        item.id = "li-"+id;
+        item.innerHTML = `${name} <span><button onclick="approve(${id},'${name}')">✓</button><button onclick="reject(${id})">X</button></span>`;
+        list.appendChild(item);
+    }
+
+    window.approve = function(id, name) {
+        if (!isAdmin) return;
+        const layer = pendingLayers[id];
+        processAdminLayer(layer, layer instanceof L.Marker ? 'marker' : 'other', name);
+        document.getElementById("li-"+id).remove();
+    };
+
+    window.reject = function(id) {
         map.removeLayer(pendingLayers[id]);
         document.getElementById("li-"+id).remove();
-    }
+    };
 
-    // --- SAVE / LOAD DATA (to your computer's browser storage) ---
-    function saveData() {
+    // --- DATA HANDLING ---
+    window.saveToBrowser = function() {
         const data = drawnItems.toGeoJSON();
-        localStorage.setItem('apocalypseMapData', JSON.stringify(data));
-        alert("Map Saved Successfully!");
-    }
+        localStorage.setItem('map_save', JSON.stringify(data));
+        alert("Saved to Browser Cache!");
+    };
 
-    function loadData() {
-        const saved = localStorage.getItem('apocalypseMapData');
+    function loadFromBrowser() {
+        const saved = localStorage.getItem('map_save');
         if (saved) {
             L.geoJSON(JSON.parse(saved), {
-                style: function(feature) { return feature.properties.style || {color: "black"}; },
-                onEachFeature: function(feature, layer) {
-                    if (feature.properties && feature.properties.popupContent) {
-                        layer.bindPopup(feature.properties.popupContent);
-                    }
-                    layer.addTo(drawnItems);
-                }
+                onEachFeature: (f, l) => { l.bindPopup(generatePopupHTML(f.properties.name || "Unnamed", true)).addTo(drawnItems); }
             });
-            alert("Map Loaded!");
         }
     }
+
+    window.exportData = function() {
+        const data = JSON.stringify(drawnItems.toGeoJSON());
+        navigator.clipboard.writeText(data);
+        alert("Data copied to clipboard! Save this in a text file to backup your map.");
+    };
 </script>
 </body>
 </html>
