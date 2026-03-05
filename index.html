@@ -1,86 +1,77 @@
 <!DOCTYPE html>
 <html style="height: 100%; margin: 0;">
 <head>
-    <title>France Apocalypse: Nuclear Command</title>
+    <title>France Apocalypse: Master Command</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-    
     <style>
-        body { 
-            height: 100%; 
-            margin: 0; 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #0f0f0f; 
-            color: #e0e0e0; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        /* Crucial Fix: Ensure the map container has a visible height */
-        #map { 
-            flex: 1; 
-            width: 100%; 
-            min-height: 500px; 
-            background: #1a1a1a;
-            border-bottom: 3px solid #ff4444;
-        }
-        .dashboard { 
-            height: 250px; 
-            padding: 15px; 
-            display: flex; 
-            gap: 15px; 
-            background: #111; 
-            overflow-y: auto; 
-            border-top: 1px solid #333;
-        }
-        .tool-box { border: 1px solid #333; padding: 12px; border-radius: 4px; background: #1a1a1a; min-width: 250px; flex: 1; }
-        h3 { margin: 0 0 10px 0; color: #ff4444; font-size: 0.8em; text-transform: uppercase; border-bottom: 1px solid #333; }
-        button { cursor: pointer; background: #222; color: #ccc; border: 1px solid #444; padding: 6px 10px; margin: 2px; border-radius: 3px; font-size: 0.8em; }
-        button:hover { background: #333; color: white; border-color: #ff4444; }
-        select, textarea { background: #222; color: white; border: 1px solid #444; padding: 4px; font-size: 0.8em; width: 100%; }
-        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1001; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #ff4444; }
+        body { height: 100%; margin: 0; font-family: 'Courier New', monospace; background: #000; color: #0f0; display: flex; flex-direction: column; }
+        #map { flex: 1; width: 100%; background: #111; border-bottom: 2px solid #0f0; }
+        .dashboard { height: 280px; padding: 15px; display: flex; gap: 15px; background: #0a0a0a; border-top: 1px solid #0f0; overflow-y: auto; }
+        .tool-box { border: 1px solid #0f0; padding: 12px; background: #000; min-width: 220px; flex: 1; font-size: 0.85em; }
+        h3 { margin: 0 0 10px 0; color: #0f0; font-size: 0.9em; text-transform: uppercase; border-bottom: 1px solid #0f0; padding-bottom: 3px; }
+        button { cursor: pointer; background: #000; color: #0f0; border: 1px solid #0f0; padding: 5px 8px; margin: 2px; font-family: 'Courier New', monospace; font-size: 0.8em; }
+        button:hover { background: #0f0; color: #000; }
+        select, textarea { background: #000; color: #0f0; border: 1px solid #0f0; padding: 4px; width: 100%; margin-bottom: 8px; }
+        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1001; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #0f0; }
         .admin-only { display: none; }
+        .hint { color: #888; font-size: 0.75em; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="status-bar">
-    <span id="user-type" style="color: #666;">ACCESS: RESTRICTED</span> 
-    <button onclick="login()">Enter Command Code</button>
+    <span id="user-type">SIGNAL: ENCRYPTED</span> 
+    <button onclick="login()">AUTH_ADMIN</button>
 </div>
 
 <div id="map"></div>
 
 <div class="dashboard">
     <div class="tool-box admin-only">
-        <h3>Command Tools</h3>
-        <label>Zone Style:</label>
-        <select id="active-type">
+        <h3>1. Geometry Config</h3>
+        <label>Polygon Zone Type:</label>
+        <select id="zone-style">
             <option value="black">Ruin (Black)</option>
             <option value="purple">Infected (Purple)</option>
             <option value="yellow">Quarantine (Yellow)</option>
-            <option value="cyan">Supply Route (Cyan Line)</option>
+            <option value="green">Safe Zone (Green)</option>
         </select>
-        <label style="display:block; margin-top:5px;">Marker Intel:</label>
-        <select id="marker-icon">
-            <option value="📍">Default</option>
-            <option value="🏠">Outpost</option>
-            <option value="🚁">Helipad</option>
-            <option value="⚓">Port</option>
-            <option value="☢️">Nuke Site</option>
+        <label>Line/Route Style:</label>
+        <select id="route-style">
+            <option value="cyan">Supply Route (Cyan)</option>
+            <option value="red">Frontline (Red)</option>
+            <option value="white">Civic Path (White)</option>
         </select>
     </div>
 
     <div class="tool-box admin-only">
-        <h3>Data Management</h3>
-        <button onclick="saveToBrowser()">💾 Save Locally</button>
-        <button onclick="exportData()">📋 Copy Backup String</button>
-        <textarea id="import-area" placeholder="Paste data string here..." rows="2" style="margin-top:5px;"></textarea>
-        <button onclick="importData()">📥 Load from String</button>
+        <h3>2. Intel Markers</h3>
+        <label>Active Unit/Site:</label>
+        <select id="marker-icon">
+            <option value="📍">Standard Pin</option>
+            <option value="🏠">Outpost/Base</option>
+            <option value="🚁">Helipad/Airfield</option>
+            <option value="⚓">Sea Port</option>
+            <option value="☢️">Nuclear Facility</option>
+            <option value="🏥">Medical/Research</option>
+            <option value="🛡️">Fortified Wall</option>
+        </select>
+        <div class="hint">Select icon before placing marker.</div>
+    </div>
+
+    <div class="tool-box admin-only">
+        <h3>3. Data/Memory</h3>
+        <button onclick="saveToBrowser()">💾 LOCAL SAVE</button>
+        <button onclick="exportData()">📋 COPY BACKUP</button>
+        <textarea id="import-area" placeholder="Paste data here..." rows="1"></textarea>
+        <button onclick="importData()">📥 LOAD STRING</button>
+        <div class="hint">Use Ctrl+Z to undo last placement.</div>
     </div>
 
     <div class="tool-box">
-        <h3>Intel Suggestions</h3>
-        <div id="pending-list" style="font-size: 0.8em; color: #888;">No incoming field reports.</div>
+        <h3>Field Suggestions</h3>
+        <div id="pending-list">No incoming intel...</div>
     </div>
 </div>
 
@@ -88,92 +79,95 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-    // Initialize Map with a small delay to ensure CSS is rendered
-    let map;
-    let drawnItems;
-    let isAdmin = false;
+    let map, drawnItems, isAdmin = false;
+    const history = [];
 
     window.onload = function() {
+        // Core Map Setup
         map = L.map('map').setView([46.2276, 2.2137], 6);
-        
-        // Use a high-contrast dark-themed map layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '©OpenStreetMap, ©CartoDB'
-        }).addTo(map);
+
+        // Sat imagery + high-vis labels
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { pane: 'shadowPane' }).addTo(map);
 
         drawnItems = new L.FeatureGroup().addTo(map);
 
-        // Define drawing tools but don't add them yet
         const drawControl = new L.Control.Draw({
             edit: { featureGroup: drawnItems },
-            draw: { circle: false, circlemarker: false }
+            draw: { circle: false, circlemarker: false, rectangle: true }
         });
 
         window.login = function() {
-            if(prompt("Enter Access Code:") === "iloveusingnuclearweapons") {
+            if(prompt("PASSWORD:") === "iloveusingnuclearweapons") {
                 isAdmin = true;
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                document.getElementById('user-type').innerText = "ACCESS: ADMIN";
-                document.getElementById('user-type').style.color = "#ff4444";
+                document.getElementById('user-type').innerText = "SIGNAL: ADMIN_ROOT";
                 map.addControl(drawControl);
                 loadFromBrowser();
             }
         };
 
         map.on(L.Draw.Event.CREATED, function (e) {
-            const name = prompt("Name this entry:");
-            if (!name) return;
-            
+            const label = prompt("Site Name/Description:");
+            if (!label) return;
             const layer = e.layer;
+
             if (isAdmin) {
-                applyAdminStyles(layer, e.layerType, name);
+                applyApocStyles(layer, e.layerType, label);
                 layer.addTo(drawnItems);
+                history.push(layer);
             } else {
-                layer.setStyle({color: 'orange', dashArray: '5,5'}).addTo(map);
-                alert("Suggestion sent to Command.");
+                layer.setStyle({color: 'orange', dashArray: '8,8'}).addTo(map);
+                alert("Intel Suggestion Uploaded to Command.");
             }
         });
 
-        function applyAdminStyles(layer, type, name) {
+        function applyApocStyles(layer, type, label) {
             if (type === 'marker') {
-                layer.setIcon(L.divIcon({html: `<div style="font-size:24px;">${document.getElementById('marker-icon').value}</div>`, className: 'icon'}));
+                const icon = document.getElementById('marker-icon').value;
+                layer.setIcon(L.divIcon({html: `<div style="font-size:24px; filter:drop-shadow(0 0 2px #000);">${icon}</div>`, className: 'icon', iconSize:[30,30]}));
+            } else if (type === 'polyline') {
+                const color = document.getElementById('route-style').value;
+                layer.setStyle({color: color, weight: 6, opacity: 0.8});
             } else {
-                const color = document.getElementById('active-type').value;
-                layer.setStyle({color: color, fillColor: color, weight: type === 'polyline' ? 5 : 2});
+                const color = document.getElementById('zone-style').value;
+                layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: 2});
             }
-            layer.bindPopup(`<b>${name}</b><br><button onclick="const n=prompt('New Name:'); if(n) this.parentElement.querySelector('b').innerText=n;">Rename</button>`);
+            
+            const popupContent = `<div><b>${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) this.parentElement.querySelector('b').innerText=n;">RENAME</button></div>`;
+            layer.bindPopup(popupContent);
         }
-    };
 
-    // Persistence Functions
-    window.saveToBrowser = () => {
-        localStorage.setItem('apoc_map', JSON.stringify(drawnItems.toGeoJSON()));
-        alert("Saved to browser!");
-    };
-
-    function loadFromBrowser() {
-        const saved = localStorage.getItem('apoc_map');
-        if (saved) loadGeoJSON(JSON.parse(saved));
-    }
-
-    window.exportData = () => {
-        const str = JSON.stringify(drawnItems.toGeoJSON());
-        navigator.clipboard.writeText(str);
-        alert("Backup string copied!");
-    };
-
-    window.importData = () => {
-        const str = document.getElementById('import-area').value;
-        if (str) loadGeoJSON(JSON.parse(str));
-    };
-
-    function loadGeoJSON(json) {
-        L.geoJSON(json, {
-            onEachFeature: (feature, layer) => {
-                layer.bindPopup(`<b>${feature.properties.name || 'Site'}</b>`);
-                layer.addTo(drawnItems);
+        // CTRL + Z
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z' && history.length > 0) {
+                const last = history.pop();
+                drawnItems.removeLayer(last);
             }
-        }).addTo(map);
+        });
+    };
+
+    // Data Systems
+    window.saveToBrowser = () => { localStorage.setItem('apoc_save_v4', JSON.stringify(drawnItems.toGeoJSON())); alert("Browser Cache Updated."); };
+    window.exportData = () => { navigator.clipboard.writeText(JSON.stringify(drawnItems.toGeoJSON())); alert("Backup String Copied to Clipboard."); };
+    window.importData = () => { 
+        const str = document.getElementById('import-area').value; 
+        if (str) { 
+            const json = JSON.parse(str);
+            L.geoJSON(json, {
+                onEachFeature: (f, l) => {
+                    l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`);
+                    l.addTo(drawnItems);
+                }
+            });
+            alert("External Data Injected.");
+        } 
+    };
+    function loadFromBrowser() {
+        const saved = localStorage.getItem('apoc_save_v4');
+        if (saved) {
+            L.geoJSON(JSON.parse(saved), { onEachFeature: (f, l) => { l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`); l.addTo(drawnItems); } });
+        }
     }
 </script>
 </body>
