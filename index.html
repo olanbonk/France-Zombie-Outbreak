@@ -1,19 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html style="height: 100%; margin: 0;">
 <head>
     <title>France Apocalypse: Nuclear Command</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; overflow: hidden; }
-        #map { height: 70vh; width: 100%; border-bottom: 3px solid #ff4444; background: #1a1a1a; }
-        .dashboard { height: 30vh; padding: 15px; display: flex; gap: 15px; background: #111; overflow-y: auto; }
+        body { 
+            height: 100%; 
+            margin: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0f0f0f; 
+            color: #e0e0e0; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        /* Crucial Fix: Ensure the map container has a visible height */
+        #map { 
+            flex: 1; 
+            width: 100%; 
+            min-height: 500px; 
+            background: #1a1a1a;
+            border-bottom: 3px solid #ff4444;
+        }
+        .dashboard { 
+            height: 250px; 
+            padding: 15px; 
+            display: flex; 
+            gap: 15px; 
+            background: #111; 
+            overflow-y: auto; 
+            border-top: 1px solid #333;
+        }
         .tool-box { border: 1px solid #333; padding: 12px; border-radius: 4px; background: #1a1a1a; min-width: 250px; flex: 1; }
         h3 { margin: 0 0 10px 0; color: #ff4444; font-size: 0.8em; text-transform: uppercase; border-bottom: 1px solid #333; }
         button { cursor: pointer; background: #222; color: #ccc; border: 1px solid #444; padding: 6px 10px; margin: 2px; border-radius: 3px; font-size: 0.8em; }
         button:hover { background: #333; color: white; border-color: #ff4444; }
         select, textarea { background: #222; color: white; border: 1px solid #444; padding: 4px; font-size: 0.8em; width: 100%; }
-        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #ff4444; }
+        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1001; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #ff4444; }
         .admin-only { display: none; }
     </style>
 </head>
@@ -64,69 +88,67 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-    // 1. Initialize Map Immediately
-    const map = L.map('map').setView([46.2276, 2.2137], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/hot/{z}/{x}/{y}.png').addTo(map);
-
-    const drawnItems = new L.FeatureGroup().addTo(map);
-    const history = [];
+    // Initialize Map with a small delay to ensure CSS is rendered
+    let map;
+    let drawnItems;
     let isAdmin = false;
 
-    const drawControl = new L.Control.Draw({
-        edit: { featureGroup: drawnItems },
-        draw: { circle: false, circlemarker: false }
-    });
-
-    // 2. Functions
-    function login() {
-        if(prompt("Enter Access Code:") === "iloveusingnuclearweapons") {
-            isAdmin = true;
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-            document.getElementById('user-type').innerText = "ACCESS: ADMIN";
-            document.getElementById('user-type').style.color = "#ff4444";
-            map.addControl(drawControl);
-            loadFromBrowser();
-        }
-    }
-
-    map.on(L.Draw.Event.CREATED, function (e) {
-        const name = prompt("Name this entry:");
-        if (!name) return;
+    window.onload = function() {
+        map = L.map('map').setView([46.2276, 2.2137], 6);
         
-        const layer = e.layer;
-        if (isAdmin) {
-            applyAdminStyles(layer, e.layerType, name);
-            layer.addTo(drawnItems);
-            history.push(layer);
-        } else {
-            // Suggestion logic simplified
-            layer.setStyle({color: 'orange', dashArray: '5,5'}).addTo(map);
-            alert("Suggestion sent to Command.");
-        }
-    });
+        // Use a high-contrast dark-themed map layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '©OpenStreetMap, ©CartoDB'
+        }).addTo(map);
 
-    function applyAdminStyles(layer, type, name) {
-        if (type === 'marker') {
-            layer.setIcon(L.divIcon({html: `<div style="font-size:24px;">${document.getElementById('marker-icon').value}</div>`, className: 'icon'}));
-        } else {
-            const color = document.getElementById('active-type').value;
-            layer.setStyle({color: color, fillColor: color, weight: type === 'polyline' ? 5 : 2});
-        }
-        layer.bindPopup(`<b>${name}</b><br><button onclick="this.parentElement.querySelector('b').innerText=prompt('New Name:')">Rename</button>`);
-    }
+        drawnItems = new L.FeatureGroup().addTo(map);
 
-    // 3. Ctrl+Z
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'z' && history.length > 0) {
-            const last = history.pop();
-            drawnItems.removeLayer(last);
-        }
-    });
+        // Define drawing tools but don't add them yet
+        const drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems },
+            draw: { circle: false, circlemarker: false }
+        });
 
-    // 4. Persistence
+        window.login = function() {
+            if(prompt("Enter Access Code:") === "iloveusingnuclearweapons") {
+                isAdmin = true;
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                document.getElementById('user-type').innerText = "ACCESS: ADMIN";
+                document.getElementById('user-type').style.color = "#ff4444";
+                map.addControl(drawControl);
+                loadFromBrowser();
+            }
+        };
+
+        map.on(L.Draw.Event.CREATED, function (e) {
+            const name = prompt("Name this entry:");
+            if (!name) return;
+            
+            const layer = e.layer;
+            if (isAdmin) {
+                applyAdminStyles(layer, e.layerType, name);
+                layer.addTo(drawnItems);
+            } else {
+                layer.setStyle({color: 'orange', dashArray: '5,5'}).addTo(map);
+                alert("Suggestion sent to Command.");
+            }
+        });
+
+        function applyAdminStyles(layer, type, name) {
+            if (type === 'marker') {
+                layer.setIcon(L.divIcon({html: `<div style="font-size:24px;">${document.getElementById('marker-icon').value}</div>`, className: 'icon'}));
+            } else {
+                const color = document.getElementById('active-type').value;
+                layer.setStyle({color: color, fillColor: color, weight: type === 'polyline' ? 5 : 2});
+            }
+            layer.bindPopup(`<b>${name}</b><br><button onclick="const n=prompt('New Name:'); if(n) this.parentElement.querySelector('b').innerText=n;">Rename</button>`);
+        }
+    };
+
+    // Persistence Functions
     window.saveToBrowser = () => {
         localStorage.setItem('apoc_map', JSON.stringify(drawnItems.toGeoJSON()));
-        alert("Saved!");
+        alert("Saved to browser!");
     };
 
     function loadFromBrowser() {
@@ -137,7 +159,7 @@
     window.exportData = () => {
         const str = JSON.stringify(drawnItems.toGeoJSON());
         navigator.clipboard.writeText(str);
-        alert("String copied! Save this in a text file.");
+        alert("Backup string copied!");
     };
 
     window.importData = () => {
