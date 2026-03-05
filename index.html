@@ -87,25 +87,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
 <script>
-    let _supabase;
+    // 1. ONLY DECLARE THIS ONCE
+    let _supabase; 
 
-    // This ensures the library exists before we try to use it
+    // 2. INITIALIZE CONNECTION
     window.addEventListener('load', () => {
-    if (typeof supabase !== 'undefined') {
-        _supabase = supabase.createClient(
-            'https://eakrupdntveyoworript.supabase.co', 
-            'sb_publishable_pS4K_2Y71HECq0ewWcAekg_PiuF771G'
-        );
-        console.log("SATELLITE LINK: ONLINE");
-    } else {
-        console.error("SATELLITE LINK: OFFLINE (Library missing)");
-    }
-});
-    // 1. Initialize Supabase (Replace with your actual keys)
-    const _supabase = supabase.createClient(
-    'https://eakrupdntveyoworript.supabase.co', 
-    'sb_publishable_pS4K_2Y71HECq0ewWcAekg_PiuF771G'
-    );
+        if (typeof supabase !== 'undefined') {
+            _supabase = supabase.createClient(
+                'https://eakrupdntveyoworript.supabase.co', 
+                'sb_publishable_pS4K_2Y71HECq0ewWcAekg_PiuF771G' // <--- Make sure your actual key is here
+            );
+            console.log("SATELLITE LINK: ONLINE");
+        }
+    });
+
+    // 3. YOUR OTHER VARIABLES (Don't declare _supabase again here!)
     let map, drawnItems, isAdmin = false;
     const history = [];
 
