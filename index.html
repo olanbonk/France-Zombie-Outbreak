@@ -16,6 +16,13 @@
         .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1001; background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid #0f0; }
         .admin-only { display: none; }
         .hint { color: #888; font-size: 0.75em; margin-top: 5px; }
+        #resizer {
+        height: 8px;
+        background: #0f0;
+        cursor: ns-resize; /* North-South resize cursor */
+        width: 100%;
+        z-index: 1002;
+}
     </style>
 </head>
 <body>
@@ -86,9 +93,15 @@
         // Core Map Setup
         map = L.map('map').setView([46.2276, 2.2137], 6);
 
-        // Sat imagery + high-vis labels
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { pane: 'shadowPane' }).addTo(map);
+        // Dark Political Map with Roads and Borders
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);;
+
+        <div id="map"></div>
+        <div id="resizer"></div> <div class="dashboard" id="dashboard">
 
         drawnItems = new L.FeatureGroup().addTo(map);
 
@@ -138,6 +151,8 @@
             layer.bindPopup(popupContent);
         }
 
+        
+
         // CTRL + Z
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'z' && history.length > 0) {
@@ -169,6 +184,24 @@
             L.geoJSON(JSON.parse(saved), { onEachFeature: (f, l) => { l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`); l.addTo(drawnItems); } });
         }
     }
+
+    const resizer = document.getElementById('resizer');
+    const dashboard = document.getElementById('dashboard');
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', () => isResizing = false);
+    });
+
+    function handleMouseMove(e) {
+        if (!isResizing) return;
+        const newHeight = window.innerHeight - e.clientY;
+        if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
+        dashboard.style.height = newHeight + 'px';
+    }
+}
 </script>
 </body>
 </html>
