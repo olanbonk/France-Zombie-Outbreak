@@ -1,62 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Collaborative France Map</title>
+    <title>France Zombie Apocalypse Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
     <style>
-        #map { height: 600px; width: 100%; border-radius: 8px; }
-        .controls { margin-bottom: 10px; font-family: sans-serif; }
-        .admin-only { display: none; background: #ffe6e6; padding: 5px; border: 1px solid red; }
+        body { font-family: 'Courier New', Courier, monospace; background: #1a1a1a; color: #ddd; margin: 0; }
+        #map { height: 80vh; width: 100%; border-bottom: 2px solid #444; }
+        .dashboard { padding: 15px; display: flex; gap: 20px; background: #222; overflow-x: auto; }
+        .tool-box { border: 1px solid #444; padding: 10px; border-radius: 5px; min-width: 200px; }
+        button { cursor: pointer; background: #444; color: white; border: 1px solid #666; padding: 5px 10px; }
+        button:hover { background: #666; }
+        .admin-only { display: none; }
+        .status-bar { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; }
+        #pending-list { list-style: none; padding: 0; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
-<div class="controls">
-    <h2>Map of France: Annotations & Suggestions</h2>
-    <button onclick="toggleAdmin()">Toggle Admin Mode (Edit Access)</button>
-    <span id="status">Status: <b>Viewer (Suggestion Mode)</b></span>
+<div class="status-bar">
+    <span id="user-type">MODE: VIEWER</span> 
+    <button onclick="login()">Admin Login</button>
 </div>
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // Initialize map centered on France
-    const map = L.map('map').setView([46.2276, 2.2137], 6);
+<div class="dashboard">
+    <div class="tool-box admin-only" id="admin-tools">
+        <h3>Admin Dashboard</h3>
+        <p>Drawing: Use the toolbar on the left of the map.</p>
+        <label>Zone Type:</label>
+        <select id="zone-color">
+            <option value="black">Ruin (Black)</option>
+            <option value="purple">Infected (Purple)</option>
+            <option value="red">Danger (Red)</option>
+            <option value="blue">Safe Route (Blue)</option>
+        </select>
+    </div>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    <div class="tool-box">
+        <h3>Incoming Suggestions</h3>
+        <ul id="pending-list"><li>No new suggestions</li></ul>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script>
+    const map = L.map('map').setView([46.2276, 2.2137], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/hot/{z}/{x}/{y}.png').addTo(map);
 
     let isAdmin = false;
+    const drawnItems = new L.FeatureGroup().addTo(map);
+    const pendingItems = [];
 
-    // Function to toggle Admin mode
-    function toggleAdmin() {
-        const password = prompt("Enter Admin Password to Edit:");
-        if (password === "france2026") { // Simple placeholder password
+    // --- DRAWING CONFIG ---
+    const drawControl = new L.Control.Draw({
+        edit: { featureGroup: drawnItems },
+        draw: { polygon: true, polyline: true, rectangle: true, circle: false, marker: true }
+    });
+
+    function login() {
+        const pw = prompt("Password:");
+        if(pw === "france2026") {
             isAdmin = true;
-            document.getElementById('status').innerHTML = "Status: <b style='color:red'>ADMIN (Edit Mode)</b>";
-            alert("Admin access granted. You can now delete markers.");
-        } else {
-            alert("Wrong password. Suggestions only.");
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            document.getElementById('user-type').innerText = "MODE: ADMIN";
+            map.addControl(drawControl); // Enable drawing tools
         }
     }
 
-    // Handle clicks for suggestions or edits
-    map.on('click', function(e) {
-        const note = prompt(isAdmin ? "Add Official Annotation:" : "Leave a Suggestion:");
-        if (note) {
-            const marker = L.marker(e.latlng).addTo(map);
-            const prefix = isAdmin ? "<b>OFFICIAL:</b> " : "<i>SUGGESTION:</i> ";
-            
-            marker.bindPopup(`${prefix}${note}<br>${isAdmin ? '<button onclick="removeMarker(this)">Delete</button>' : ''}`).openPopup();
+    // --- HANDLING NEW SHAPES/MARKERS ---
+    map.on(L.Draw.Event.CREATED, function (event) {
+        const layer = event.layer;
+        const type = event.layerType;
+        const label = prompt("Label this " + type + ":");
+
+        if (isAdmin) {
+            // Apply Admin Colors
+            const color = document.getElementById('zone-color').value;
+            if (layer.setStyle) layer.setStyle({ color: color, fillColor: color });
+            layer.bindPopup("<b>" + label + "</b>").addTo(drawnItems);
+        } else {
+            // It's a suggestion
+            handleSuggestion(layer, label);
         }
     });
 
-    function removeMarker(btn) {
-        if(isAdmin) {
-            map.removeLayer(btn.closest('.leaflet-marker-icon') || /* logic to find layer */ alert("Use Admin tools to clear markers"));
-        }
+    // --- SUGGESTION LOGIC ---
+    function handleSuggestion(layer, label) {
+        const id = Date.now();
+        layer.bindPopup("<i>PENDING: " + label + "</i>");
+        layer.addTo(map); // Show it temporarily for the user
+
+        const listItem = document.createElement('li');
+        listItem.id = "suggest-" + id;
+        listItem.innerHTML = `New ${label} <button onclick="approve(${id})">Approve</button> <button onclick="reject(${id})">X</button>`;
+        
+        document.getElementById('pending-list').appendChild(listItem);
+        pendingItems.push({ id, layer, label });
+    }
+
+    function approve(id) {
+        if (!isAdmin) return alert("Admins only");
+        const item = pendingItems.find(p => p.id === id);
+        item.layer.setStyle({ color: 'green' }); // Approved color
+        item.layer.bindPopup("<b>" + item.label + "</b>");
+        document.getElementById("suggest-" + id).remove();
+    }
+
+    function reject(id) {
+        const item = pendingItems.find(p => p.id === id);
+        map.removeLayer(item.layer);
+        document.getElementById("suggest-" + id).remove();
     }
 </script>
 </body>
