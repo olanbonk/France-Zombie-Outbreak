@@ -201,6 +201,23 @@ setTimeout(() => { map.invalidateSize(); }, 200);;
         const newHeight = window.innerHeight - e.clientY;
         if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
         dashboard.style.height = newHeight + 'px';
+
+    function handleMouseMove(e) {
+    if (!isResizing) return;
+    
+    // Calculate new height
+    const newHeight = window.innerHeight - e.clientY;
+    
+    // Set limits so you don't accidentally hide the whole map
+    if (newHeight > 50 && newHeight < window.innerHeight * 0.9) {
+        dashboard.style.height = newHeight + 'px';
+        
+        // CRUCIAL: Tell the map to refresh its internal dimensions
+        if (map) {
+            map.invalidateSize();
+        }
+    }
+}
     }
 }
 </script>
