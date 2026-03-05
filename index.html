@@ -33,6 +33,9 @@
 </div>
 
 <div id="map"></div>
+<div id="resizer"></div> <div class="dashboard" id="dashboard">
+
+<div id="map"></div>
 
 <div class="dashboard">
     <div class="tool-box admin-only">
@@ -98,10 +101,7 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 20
-        }).addTo(map);;
-
-        <div id="map"></div>
-        <div id="resizer"></div> <div class="dashboard" id="dashboard">
+        }).addTo(map);
 
         drawnItems = new L.FeatureGroup().addTo(map);
 
