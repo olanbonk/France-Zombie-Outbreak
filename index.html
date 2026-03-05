@@ -112,6 +112,9 @@
         // Bright, Clear Political Map (Original Version)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
+        setTimeout(() => { 
+        loadFromCloud(); 
+    }, 500); // Gives the database 0.5 seconds to wake up
     }).addTo(map);
 
 // This ensures the map fills the space correctly after loading
