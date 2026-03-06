@@ -265,12 +265,12 @@ async function loadFromCloud() {
                 
                 // 4. If it's a marker, make sure it stays an emoji
                 if (feature.properties.icon && layer.setIcon) {
-                    layer.setIcon(L.divIcon({
+                    layer.setIcon(L.divIcon){
                         html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
                         className: 'icon',
                         iconSize: [30, 30]
                     });
-                })
+                }
             }
         }); // <--- Closes L.geoJSON
     } // <--- Closes else if (data)
