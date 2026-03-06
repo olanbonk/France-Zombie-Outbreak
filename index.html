@@ -178,18 +178,18 @@
     }
     layer.bindPopup(`<b>${label}</b>`);
 }
-            
-            const popupContent = `<div><b>${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) this.parentElement.querySelector('b').innerText=n;">RENAME</button></div>`;
-            layer.bindPopup(popupContent);
+          
         }
 
         
 
         // CTRL + Z
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'z' && history.length > 0) {
-                const last = history.pop();
-                drawnItems.removeLayer(last);
+            if (e.ctrlKey && e.key === 'z' && isAdmin) {
+                const layers = drawnItems.getLayers();
+                if (layers.length > 0) {
+                    drawnItems.removeLayer(layers[layers.length - 1]);
+                }
             }
         });
 
@@ -247,8 +247,9 @@ async function loadFromCloud() {
                 
                 // ADDING THE RENAME BUTTON TO LOADED ITEMS:
                 const label = feature.properties.name || 'Site';
-                const popupContent = `<div><b>${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) { this.parentElement.querySelector('b').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`;
-                layer.bindPopup(popupContent);
+                const popupContent = `<div><b id="lbl-${L.stamp(layer)}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) { document.getElementById('lbl-${L.stamp(layer)}').innerText=n; this.closest('div').querySelector('b').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`;
+                const sid = L.stamp(layer);
+                layer.bindPopup(`<div><b id="lbl-${sid}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n){ document.getElementById('lbl-${sid}').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`);
 
                 if (feature.properties.icon && layer.setIcon) {
                     layer.setIcon(L.divIcon({
