@@ -130,7 +130,7 @@
 
 
         window.login = function() {
-            if(prompt("PASSWORD:") === "ASDDFGHJKL;'") {
+            if(prompt("PASSWORD:") === "ASDFGHJKL;'") {
                 isAdmin = true;
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                 document.getElementById('user-type').innerText = "SIGNAL: ADMIN_ROOT";
@@ -149,8 +149,7 @@
                 layer.addTo(drawnItems);
                 history.push(layer);
             } else {
-                layer.setStyle({color: 'orange', dashArray: '8,8'}).addTo(map);
-                alert("Intel Suggestion Uploaded to Command.");
+                return;
             }
         });
 
