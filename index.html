@@ -161,17 +161,31 @@ setTimeout(() => { map.invalidateSize(); }, 200);;
             }
         });
 
-        function applyApocStyles(layer, type, label) {
-            if (type === 'marker') {
-                const icon = document.getElementById('marker-icon').value;
-                layer.setIcon(L.divIcon({html: `<div style="font-size:24px; filter:drop-shadow(0 0 2px #000);">${icon}</div>`, className: 'icon', iconSize:[30,30]}));
-            } else if (type === 'polyline') {
-                const color = document.getElementById('route-style').value;
-                layer.setStyle({color: color, weight: 6, opacity: 0.8});
-            } else {
-                const color = document.getElementById('zone-style').value;
-                layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: 2});
-            }
+      function applyApocStyles(layer, type, label) {
+    // 1. Create the "Memory" for this object
+    layer.feature = layer.feature || {type: "Feature", properties: {}};
+    layer.feature.properties.name = label;
+    layer.feature.properties.type = type;
+
+    if (type === 'marker') {
+        const icon = document.getElementById('marker-icon').value;
+        layer.feature.properties.icon = icon; // Saves the Emoji
+        layer.setIcon(L.divIcon({
+            html: `<div style="font-size:24px; filter:drop-shadow(0 0 2px #000);">${icon}</div>`, 
+            className: 'icon', 
+            iconSize:[30,30]
+        }));
+    } else {
+        // Saves the specific Color (Red, Purple, etc.)
+        const color = (type === 'polyline') ? 
+            document.getElementById('route-style').value : 
+            document.getElementById('zone-style').value;
+        
+        layer.feature.properties.color = color; 
+        layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: (type === 'polyline' ? 6 : 2)});
+    }
+    layer.bindPopup(`<b>${label}</b>`);
+}
             
             const popupContent = `<div><b>${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) this.parentElement.querySelector('b').innerText=n;">RENAME</button></div>`;
             layer.bindPopup(popupContent);
@@ -219,9 +233,31 @@ async function loadFromCloud() {
         // Clear current map before loading
         drawnItems.clearLayers();
         L.geoJSON(data.geojson_data, {
-            onEachFeature: (f, l) => {
-                l.bindPopup(`<b>${f.properties.name || 'Site'}</b>`);
-                l.addTo(drawnItems);
+            pointToLayer: (feature, latlng) => {
+                // 1. Restore the ICON
+                const icon = feature.properties.icon || '📍';
+                return L.marker(latlng, {
+                    icon: L.divIcon({
+                        html: `<div style="font-size:24px;">${icon}</div>`,
+                        className: 'icon',
+                        iconSize: [30, 30]
+                    })
+                });
+            },
+            style: (feature) => {
+                // 2. Restore the COLORS/STYLES
+                return {
+                    color: feature.properties.color || '#0f0',
+                    fillColor: feature.properties.color || '#0f0',
+                    fillOpacity: 0.4,
+                    weight: feature.properties.type === 'polyline' ? 6 : 2
+                };
+            },
+            onEachFeature: (feature, layer) => {
+                // 3. Restore the NAME and EDITABILITY
+                layer.feature = feature; // Attach data back to layer
+                layer.bindPopup(`<b>${feature.properties.name || 'Site'}</b>`);
+                layer.addTo(drawnItems); // Adds it to the "Editable" group
                 }
             });
         }
