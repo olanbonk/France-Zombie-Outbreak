@@ -254,11 +254,15 @@ async function loadFromCloud() {
                 };
             },
             onEachFeature: (feature, layer) => {
-                // 3. Restore the NAME and EDITABILITY
-                layer.feature = feature; // Attach data back to layer
+                // 1. Attach the data back so Edit/Delete can see it
+                layer.feature = feature; 
+                
+                // 2. Add it to the DRAWN group (This makes it deletable!)
+                drawnItems.addLayer(layer); 
+                
+                // 3. Put the name back in the popup
                 layer.bindPopup(`<b>${feature.properties.name || 'Site'}</b>`);
-                layer.addTo(drawnItems); // Adds it to the "Editable" group
-                }
+            }
             });
         }
     }
