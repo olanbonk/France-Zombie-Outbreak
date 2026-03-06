@@ -131,9 +131,6 @@
         // Initial Map Fix
         setTimeout(() => { map.invalidateSize(); }, 200);
 
-// This ensures the map fills the space correctly after loading
-setTimeout(() => { map.invalidateSize(); }, 200);;
-
         drawnItems = new L.FeatureGroup().addTo(map);
 
         window.login = function() {
