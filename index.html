@@ -147,7 +147,7 @@
             if (isAdmin) {
                 applyApocStyles(layer, e.layerType, label);
                 layer.addTo(drawnItems);
-                history.push(layer);
+                   pushUndo({ type: 'add', layer });
             } else {
                 return;
             }
@@ -184,12 +184,44 @@
         
 
         // CTRL + Z
+        const undoStack = [];
+        const redoStack = [];
+
+        window.pushUndo = function(action) {
+            undoStack.push(action);
+            redoStack.length = 0; // clear redo on new action
+        }
+
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'z' && isAdmin) {
-                const layers = drawnItems.getLayers();
-                if (layers.length > 0) {
-                    drawnItems.removeLayer(layers[layers.length - 1]);
+            if (!isAdmin) return;
+            if (e.ctrlKey && e.shiftKey && e.key === 'Z') {
+                if (redoStack.length === 0) return;
+                const action = redoStack.pop();
+                if (action.type === 'add') {
+                    drawnItems.addLayer(action.layer);
+                } else if (action.type === 'remove') {
+                    drawnItems.removeLayer(action.layer);
+                } else if (action.type === 'rename') {
+                    action.layer.feature.properties.name = action.newName;
+                    const sid = L.stamp(action.layer);
+                    const el = document.getElementById('lbl-' + sid);
+                    if (el) el.innerText = action.newName;
                 }
+                undoStack.push(action);
+            } else if (e.ctrlKey && e.key === 'z') {
+                if (undoStack.length === 0) return;
+                const action = undoStack.pop();
+                if (action.type === 'add') {
+                    drawnItems.removeLayer(action.layer);
+                } else if (action.type === 'remove') {
+                    drawnItems.addLayer(action.layer);
+                } else if (action.type === 'rename') {
+                    action.layer.feature.properties.name = action.oldName;
+                    const sid = L.stamp(action.layer);
+                    const el = document.getElementById('lbl-' + sid);
+                    if (el) el.innerText = action.oldName;
+                }
+                redoStack.push(action);
             }
         });
 
@@ -247,10 +279,11 @@ async function loadFromCloud() {
                 
                 // ADDING THE RENAME BUTTON TO LOADED ITEMS:
                 const label = feature.properties.name || 'Site';
-                const popupContent = `<div><b id="lbl-${L.stamp(layer)}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) { document.getElementById('lbl-${L.stamp(layer)}').innerText=n; this.closest('div').querySelector('b').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`;
+                
                 const sid = L.stamp(layer);
-                layer.bindPopup(`<div><b id="lbl-${sid}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n){ document.getElementById('lbl-${sid}').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`);
-
+                const sid = L.stamp(layer);
+                const popupContent = `<div><b id="lbl-${sid}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button></div>`;
+                layer.bindPopup(popupContent);
                 if (feature.properties.icon && layer.setIcon) {
                     layer.setIcon(L.divIcon({
                         html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
