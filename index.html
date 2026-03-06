@@ -254,17 +254,24 @@ async function loadFromCloud() {
                 };
             },
             onEachFeature: (feature, layer) => {
-                // 1. Attach the data back so Edit/Delete can see it
+                // 1. Link the data back
                 layer.feature = feature; 
                 
-                // 2. Add it to the DRAWN group (This makes it deletable!)
+                // 2. FORCE add to the editable group
                 drawnItems.addLayer(layer); 
                 
-                // 3. Put the name back in the popup
+                // 3. Re-bind the popup so it's clickable
                 layer.bindPopup(`<b>${feature.properties.name || 'Site'}</b>`);
+                
+                // 4. If it's a marker, make sure it stays an emoji
+                if (feature.properties.icon && layer.setIcon) {
+                    layer.setIcon(L.divIcon({
+                        html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
+                        className: 'icon',
+                        iconSize: [30, 30]
+                    }));
+                }
             }
-            });
-        }
     }
 
 
