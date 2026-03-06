@@ -128,10 +128,6 @@
             }
         }, 500); 
 
-        // Initial Map Fix
-        setTimeout(() => { map.invalidateSize(); }, 200);
-
-        drawnItems = new L.FeatureGroup().addTo(map);
 
         window.login = function() {
             if(prompt("PASSWORD:") === "iloveusingnuclearweapons") {
@@ -216,7 +212,6 @@ async function saveToCloud() {
     }
 }
 
-// NEW: Global Cloud Load
 async function loadFromCloud() {
     const { data, error } = await _supabase
         .from('map_data')
@@ -227,11 +222,9 @@ async function loadFromCloud() {
     if (error) {
         console.error(error);
     } else if (data && data.geojson_data) {
-        // Clear current map before loading
         drawnItems.clearLayers();
         L.geoJSON(data.geojson_data, {
             pointToLayer: (feature, latlng) => {
-                // 1. Restore the ICON
                 const icon = feature.properties.icon || '📍';
                 return L.marker(latlng, {
                     icon: L.divIcon({
@@ -242,7 +235,6 @@ async function loadFromCloud() {
                 });
             },
             style: (feature) => {
-                // 2. Restore the COLORS/STYLES
                 return {
                     color: feature.properties.color || '#0f0',
                     fillColor: feature.properties.color || '#0f0',
@@ -251,16 +243,14 @@ async function loadFromCloud() {
                 };
             },
             onEachFeature: (feature, layer) => {
-                // 1. Link the data back
                 layer.feature = feature; 
-                
-                // 2. FORCE add to the editable group
                 drawnItems.addLayer(layer); 
                 
-                // 3. Re-bind the popup so it's clickable
-                layer.bindPopup(`<b>${feature.properties.name || 'Site'}</b>`);
-                
-                // 4. If it's a marker, make sure it stays an emoji
+                // ADDING THE RENAME BUTTON TO LOADED ITEMS:
+                const label = feature.properties.name || 'Site';
+                const popupContent = `<div><b>${label}</b><br><button onclick="const n=prompt('New Name:'); if(n) { this.parentElement.querySelector('b').innerText=n; layer.feature.properties.name=n; }">RENAME</button></div>`;
+                layer.bindPopup(popupContent);
+
                 if (feature.properties.icon && layer.setIcon) {
                     layer.setIcon(L.divIcon({
                         html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
@@ -269,11 +259,9 @@ async function loadFromCloud() {
                     }));
                 }
             }
-        }); // <--- Closes L.geoJSON
-    } // <--- Closes else if (data)
-} // <--- Closes loadFromCloud function
-
-
+        });
+    }
+}
     // SINGLE RE-SIZING LOGIC BLOCK
 const resizer = document.getElementById('resizer');
 const dashboard = document.getElementById('dashboard');
