@@ -192,38 +192,38 @@
             redoStack.length = 0; // clear redo on new action
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (!isAdmin) return;
-            if (e.ctrlKey && e.shiftKey && e.key === 'Z') {
-                if (redoStack.length === 0) return;
-                const action = redoStack.pop();
-                if (action.type === 'add') {
-                    drawnItems.addLayer(action.layer);
-                } else if (action.type === 'remove') {
-                    drawnItems.removeLayer(action.layer);
-                } else if (action.type === 'rename') {
-                    action.layer.feature.properties.name = action.newName;
-                    const sid = L.stamp(action.layer);
-                    const el = document.getElementById('lbl-' + sid);
-                    if (el) el.innerText = action.newName;
-                }
-                undoStack.push(action);
-            } else if (e.ctrlKey && e.key === 'z') {
-                if (undoStack.length === 0) return;
-                const action = undoStack.pop();
-                if (action.type === 'add') {
-                    drawnItems.removeLayer(action.layer);
-                } else if (action.type === 'remove') {
-                    drawnItems.addLayer(action.layer);
-                } else if (action.type === 'rename') {
-                    action.layer.feature.properties.name = action.oldName;
-                    const sid = L.stamp(action.layer);
-                    const el = document.getElementById('lbl-' + sid);
-                    if (el) el.innerText = action.oldName;
-                }
-                redoStack.push(action);
-            }
-        });
+document.addEventListener('keydown', (e) => {
+    if (!isAdmin) return;
+    if (e.ctrlKey && e.shiftKey && e.key === 'Z') {
+        if (redoStack.length === 0) return;
+        const action = redoStack.pop();
+        if (action.type === 'add') {
+            drawnItems.addLayer(action.layer);
+        } else if (action.type === 'remove') {
+            drawnItems.removeLayer(action.layer);
+        } else if (action.type === 'rename') {
+            action.layer.feature.properties.name = action.newName;
+            const sid = L.stamp(action.layer);
+            const el = document.getElementById('lbl-' + sid);
+            if (el) el.innerText = action.newName;
+        }
+        undoStack.push(action);
+    } else if (e.ctrlKey && e.key === 'z') {
+        if (undoStack.length === 0) return;
+        const action = undoStack.pop();
+        if (action.type === 'add') {
+            drawnItems.removeLayer(action.layer);
+        } else if (action.type === 'remove') {
+            drawnItems.addLayer(action.layer);
+        } else if (action.type === 'rename') {
+            action.layer.feature.properties.name = action.oldName;
+            const sid = L.stamp(action.layer);
+            const el = document.getElementById('lbl-' + sid);
+            if (el) el.innerText = action.oldName;
+        }
+        redoStack.push(action);
+    }
+});;
 
 
     // Data Systems
