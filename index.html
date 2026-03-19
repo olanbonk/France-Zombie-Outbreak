@@ -281,7 +281,6 @@ async function loadFromCloud() {
                 const label = feature.properties.name || 'Site';
                 
                 const sid = L.stamp(layer);
-                const sid = L.stamp(layer);
                 const popupContent = `<div><b id="lbl-${sid}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button></div>`;
                 layer.bindPopup(popupContent);
                 if (feature.properties.icon && layer.setIcon) {
