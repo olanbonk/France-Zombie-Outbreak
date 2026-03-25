@@ -129,15 +129,22 @@
         }, 500); 
 
 
-        window.login = function() {
-            if(prompt("PASSWORD:") === "pantelovesnukes") {
-                isAdmin = true;
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                document.getElementById('user-type').innerText = "SIGNAL: ADMIN_ROOT";
-                map.addControl(drawControl);
-                loadFromBrowser();
-            }
-        };
+window.login = function() {
+    let input = prompt("PASSWORD:");
+    
+    // This is the SHA-256 hash for "theunistryistheunistry"
+    const secureHash = "f9e772410787361a45749455359a35606d15386f686e0037a6270e5f2a716f94";
+
+    if (CryptoJS.SHA256(input).toString() === secureHash) {
+        isAdmin = true;
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        document.getElementById('user-type').innerText = "SIGNAL: ADMIN_ROOT";
+        map.addControl(drawControl);
+        loadFromBrowser();
+    } else {
+        alert("ACCESS DENIED");
+    }
+};
 
         map.on(L.Draw.Event.CREATED, function (e) {
             const label = prompt("Site Name/Description:");
