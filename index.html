@@ -6,7 +6,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
+    <style><div class="tool-box admin-only">
+    <h3>1. Geometry Config</h3>
+    <label>Active Color:</label>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+        <div id="color-preview" style="width:36px;height:36px;background:#ff0000;border:2px solid #0f0;cursor:pointer;flex-shrink:0;" onclick="togglePicker()"></div>
+        <input id="hex-input" type="text" value="#ff0000" maxlength="7"
+            style="background:#000;color:#0f0;border:1px solid #0f0;padding:4px;width:70px;font-family:'Courier New',monospace;font-size:0.85em;"
+            oninput="onHexType(this.value)">
+        <button id="eyedropper-btn" title="Pick color from screen" onclick="launchEyedropper()" style="font-size:1.1em;padding:4px 7px;">🔬</button>
+    </div>
+
+    <!-- Color wheel picker panel -->
+    <div id="picker-panel" style="display:none;margin-bottom:8px;">
+        <canvas id="color-wheel" width="140" height="140" style="cursor:crosshair;display:block;"></canvas>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span style="font-size:0.75em;">L:</span>
+            <input id="lightness-slider" type="range" min="0" max="100" value="50"
+                style="flex:1;accent-color:#0f0;" oninput="onLightnessChange(this.value)">
+        </div>
+    </div>
+
+    <!-- Saved colors -->
+    <div style="font-size:0.75em;margin-bottom:4px;">SAVED COLORS: <button onclick="saveCurrentColor()" style="font-size:0.75em;padding:2px 5px;">+ SAVE</button></div>
+    <div id="saved-swatches" style="display:flex;flex-wrap:wrap;gap:3px;min-height:22px;margin-bottom:6px;"></div>
+</div>
         body { height: 100%; margin: 0; font-family: 'Courier New', monospace; background: #000; color: #0f0; display: flex; flex-direction: column; }
         #map { flex: 1; width: 100%; background: #111; border-bottom: 2px solid #0f0; }
         .dashboard { height: 280px; padding: 15px; display: flex; gap: 15px; background: #0a0a0a; border-top: 1px solid #0f0; overflow-y: auto; }
@@ -173,18 +197,12 @@ window.login = async function() {
         
       map.on(L.Draw.Event.CREATED, function (e) {
     if (!isAdmin) return;
-    
     const layer = e.layer;
-    
-    // Add to map FIRST before prompting, so it doesn't vanish
     layer.addTo(drawnItems);
-    
     const label = prompt("Site Name/Description:") || "Unnamed Site";
-    
     applyApocStyles(layer, e.layerType, label);
     pushUndo({ type: 'add', layer });
 });
-
       function applyApocStyles(layer, type, label) {
     // 1. Create the "Memory" for this object
     layer.feature = layer.feature || {type: "Feature", properties: {}};
@@ -201,10 +219,7 @@ window.login = async function() {
         }));
     } else {
         // Saves the specific Color (Red, Purple, etc.)
-        const color = (type === 'polyline') ? 
-            document.getElementById('route-style').value : 
-            document.getElementById('zone-style').value;
-        
+const color = window.selectedMapColor || '#ff0000';        
         layer.feature.properties.color = color; 
         layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: (type === 'polyline' ? 6 : 2)});
     }
@@ -347,6 +362,144 @@ function handleMouseMove(e) {
         dashboard.style.height = newHeight + 'px';
         if (map) { map.invalidateSize(); }
     }
+}
+    // ── COLOR PICKER SYSTEM ──────────────────────────────────────────
+window.selectedMapColor = '#ff0000';
+let pickerLightness = 50;
+let savedColors = JSON.parse(localStorage.getItem('apoc_saved_colors') || '[]');
+
+function togglePicker() {
+    const panel = document.getElementById('picker-panel');
+    const open = panel.style.display === 'none';
+    panel.style.display = open ? 'block' : 'none';
+    if (open) drawColorWheel();
+}
+
+function setActiveColor(hex) {
+    window.selectedMapColor = hex;
+    document.getElementById('color-preview').style.background = hex;
+    document.getElementById('hex-input').value = hex;
+}
+
+function onHexType(val) {
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) setActiveColor(val);
+}
+
+function onLightnessChange(val) {
+    pickerLightness = parseInt(val);
+    drawColorWheel();
+}
+
+function drawColorWheel() {
+    const canvas = document.getElementById('color-wheel');
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 2;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let angle = 0; angle < 360; angle++) {
+        const startAngle = (angle - 1) * Math.PI / 180;
+        const endAngle = (angle + 1) * Math.PI / 180;
+        for (let sat = 0; sat <= 100; sat += 2) {
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+            grad.addColorStop(sat / 100, `hsl(${angle},${sat}%,${pickerLightness}%)`);
+            grad.addColorStop(1, `hsl(${angle},${sat}%,${pickerLightness}%)`);
+        }
+        // Draw as sector slices
+        const gradient = ctx.createLinearGradient(
+            cx + Math.cos(startAngle) * r, cy + Math.sin(startAngle) * r,
+            cx, cy
+        );
+        gradient.addColorStop(0, `hsl(${angle},100%,${pickerLightness}%)`);
+        gradient.addColorStop(1, `hsl(${angle},0%,${pickerLightness}%)`);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const canvas = document.getElementById('color-wheel');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (e.target !== canvas) return;
+    const x = e.clientX - rect.left - canvas.width / 2;
+    const y = e.clientY - rect.top - canvas.height / 2;
+    const r = canvas.width / 2 - 2;
+    const dist = Math.sqrt(x*x + y*y);
+    if (dist > r) return;
+    const angle = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+    const sat = Math.min(100, (dist / r) * 100);
+    const hsl = `hsl(${angle},${sat}%,${pickerLightness}%)`;
+    // Convert HSL to hex
+    const tmp = document.createElement('div');
+    tmp.style.color = hsl;
+    document.body.appendChild(tmp);
+    const rgb = getComputedStyle(tmp).color;
+    document.body.removeChild(tmp);
+    const hex = rgbToHex(rgb);
+    setActiveColor(hex);
+});
+
+function rgbToHex(rgb) {
+    const m = rgb.match(/\d+/g);
+    if (!m) return '#ff0000';
+    return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+}
+
+// Eyedropper
+async function launchEyedropper() {
+    if (!window.EyeDropper) {
+        alert("Eyedropper not supported in this browser. Use Chrome 95+.");
+        return;
+    }
+    try {
+        const dropper = new EyeDropper();
+        const result = await dropper.open();
+        setActiveColor(result.sRGBHex);
+    } catch(e) { /* user cancelled */ }
+}
+
+// Show eyedropper btn only if supported
+window.addEventListener('load', () => {
+    if (!window.EyeDropper) {
+        const btn = document.getElementById('eyedropper-btn');
+        if (btn) btn.style.display = 'none';
+    }
+    renderSavedSwatches();
+});
+
+// Saved colors
+function saveCurrentColor() {
+    const c = window.selectedMapColor;
+    if (!savedColors.includes(c)) {
+        savedColors.unshift(c);
+        if (savedColors.length > 20) savedColors.pop();
+        localStorage.setItem('apoc_saved_colors', JSON.stringify(savedColors));
+        renderSavedSwatches();
+    }
+}
+
+function renderSavedSwatches() {
+    const container = document.getElementById('saved-swatches');
+    if (!container) return;
+    container.innerHTML = '';
+    savedColors.forEach(hex => {
+        const s = document.createElement('div');
+        s.title = hex;
+        s.style.cssText = `width:18px;height:18px;background:${hex};border:1px solid #0f0;cursor:pointer;flex-shrink:0;`;
+        s.onclick = () => setActiveColor(hex);
+        // Right click to delete
+        s.oncontextmenu = (e) => {
+            e.preventDefault();
+            savedColors = savedColors.filter(c => c !== hex);
+            localStorage.setItem('apoc_saved_colors', JSON.stringify(savedColors));
+            renderSavedSwatches();
+        };
+        container.appendChild(s);
+    });
+    if (savedColors.length === 0) container.innerHTML = '<span style="color:#555;font-size:0.75em;">None saved yet</span>';
 }
 </script>
 </body>
