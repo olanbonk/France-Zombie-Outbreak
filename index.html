@@ -130,32 +130,43 @@
         }, 500); 
 
 
-window.login = function() {
+window.login = async function() {
     let input = prompt("PASSWORD:");
-    
-    // Scramble the user's input so we can compare it safely
-    let hashedInput = CryptoJS.SHA256(input).toString();
-    
-    // This is the "scrambled" version of: theunistryistheunistry
+    if (!input) return;
+
+    // Clean the input: remove spaces and make lowercase
+    const cleanInput = input.trim().toLowerCase();
+
+    // Use the browser's built-in "SubtleCrypto" to hash the password
+    const msgUint8 = new TextEncoder().encode(cleanInput);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // This is the hash for: theunistryistheunistry
     const secureHash = "f9e772410787361a45749455359a35606d15386f686e0037a6270e5f2a716f94";
 
     if (hashedInput === secureHash) {
         isAdmin = true;
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-        document.getElementById('user-type').innerText = "SIGNAL: ADMIN_ROOT";
         
-        // Ensure these variables/functions exist in your other script files
+        // Update UI
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        const statusEl = document.getElementById('user-type');
+        if (statusEl) statusEl.innerText = "SIGNAL: ADMIN_ROOT";
+
+        // Activate Map Controls if they exist
         if (typeof map !== 'undefined' && typeof drawControl !== 'undefined') {
             map.addControl(drawControl);
         }
+        
+        // Load data
         if (typeof loadFromBrowser === 'function') {
             loadFromBrowser();
         }
-        
+
         alert("ACCESS GRANTED");
     } else {
-        alert("ACCESS DENIED");
-        console.log("Input hash didn't match. Check for typos or extra spaces.");
+        alert("ACCESS DENIED: Password Incorrect");
     }
 };
         map.on(L.Draw.Event.CREATED, function (e) {
