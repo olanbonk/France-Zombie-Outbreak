@@ -7,28 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-    <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
-        <div id="color-preview" style="width:36px;height:36px;background:#ff0000;border:2px solid #0f0;cursor:pointer;flex-shrink:0;" onclick="togglePicker()"></div>
-        <input id="hex-input" type="text" value="#ff0000" maxlength="7"
-            style="background:#000;color:#0f0;border:1px solid #0f0;padding:4px;width:70px;font-family:'Courier New',monospace;font-size:0.85em;"
-            oninput="onHexType(this.value)">
-        <button id="eyedropper-btn" title="Pick color from screen" onclick="launchEyedropper()" style="font-size:1.1em;padding:4px 7px;">🔬</button>
-    </div>
-
-    <!-- Color wheel picker panel -->
-    <div id="picker-panel" style="display:none;margin-bottom:8px;">
-        <canvas id="color-wheel" width="140" height="140" style="cursor:crosshair;display:block;"></canvas>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-            <span style="font-size:0.75em;">L:</span>
-            <input id="lightness-slider" type="range" min="0" max="100" value="50"
-                style="flex:1;accent-color:#0f0;" oninput="onLightnessChange(this.value)">
-        </div>
-    </div>
-
-    <!-- Saved colors -->
-    <div style="font-size:0.75em;margin-bottom:4px;">SAVED COLORS: <button onclick="saveCurrentColor()" style="font-size:0.75em;padding:2px 5px;">+ SAVE</button></div>
-    <div id="saved-swatches" style="display:flex;flex-wrap:wrap;gap:3px;min-height:22px;margin-bottom:6px;"></div>
-</div>
+   
         body { height: 100%; margin: 0; font-family: 'Courier New', monospace; background: #000; color: #0f0; display: flex; flex-direction: column; }
         #map { flex: 1; width: 100%; background: #111; border-bottom: 2px solid #0f0; }
         .dashboard { height: 280px; padding: 15px; display: flex; gap: 15px; background: #0a0a0a; border-top: 1px solid #0f0; overflow-y: auto; }
