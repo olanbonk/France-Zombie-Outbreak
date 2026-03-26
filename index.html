@@ -63,14 +63,47 @@
         <h3>2. Intel Markers</h3>
         <label>Active Unit/Site:</label>
         <select id="marker-icon">
-            <option value="📍">Standard Pin</option>
-            <option value="🏠">Outpost/Base</option>
-            <option value="🚁">Helipad/Airfield</option>
-            <option value="⚓">Sea Port</option>
-            <option value="☢️">Nuclear Facility</option>
-            <option value="🏥">Medical/Research</option>
-            <option value="🛡️">Fortified Wall</option>
-        </select>
+    <option value="📍">📍 Pin</option>
+    <option value="🏠">🏠 House</option>
+    <option value="🏚️">🏚️ Abandoned</option>
+    <option value="🏛️">🏛️ Government</option>
+    <option value="🏭">🏭 Factory</option>
+    <option value="🏗️">🏗️ Construction</option>
+    <option value="🚁">🚁 Helicopter</option>
+    <option value="✈️">✈️ Airport</option>
+    <option value="⚓">⚓ Port</option>
+    <option value="🚂">🚂 Train</option>
+    <option value="🚧">🚧 Roadblock</option>
+    <option value="☢️">☢️ Nuclear</option>
+    <option value="☣️">☣️ Biohazard</option>
+    <option value="⚠️">⚠️ Warning</option>
+    <option value="❗">❗ Alert</option>
+    <option value="💀">💀 Death Zone</option>
+    <option value="🔥">🔥 Fire</option>
+    <option value="💥">💥 Explosion</option>
+    <option value="🏥">🏥 Hospital</option>
+    <option value="💊">💊 Supplies</option>
+    <option value="🔬">🔬 Lab</option>
+    <option value="🛡️">🛡️ Fortified</option>
+    <option value="⚔️">⚔️ Combat</option>
+    <option value="🔫">🔫 Weapons</option>
+    <option value="💣">💣 Bomb</option>
+    <option value="🔒">🔒 Locked</option>
+    <option value="📡">📡 Comms</option>
+    <option value="🔭">🔭 Lookout</option>
+    <option value="⛺">⛺ Camp</option>
+    <option value="🍖">🍖 Food</option>
+    <option value="💧">💧 Water</option>
+    <option value="⛽">⛽ Fuel</option>
+    <option value="🔋">🔋 Power</option>
+    <option value="🚑">🚑 Medic</option>
+    <option value="🚒">🚒 Fire Dept</option>
+    <option value="🚓">🚓 Police</option>
+    <option value="🪖">🪖 Military</option>
+    <option value="🏴">🏴 Claimed</option>
+    <option value="🚩">🚩 Flagged</option>
+    <option value="❓">❓ Unknown</option>
+</select>
         <div class="hint">Select icon before placing marker.</div>
     </div>
 
@@ -227,8 +260,25 @@ const color = window.selectedMapColor || '#ff0000';
         layer.feature.properties.color = color; 
         layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: (type === 'polyline' ? 6 : 2)});
     }
-    layer.bindPopup(`<b>${label}</b>`);
-}
+const sid2 = L.stamp(layer);
+const isMarker2 = type === 'marker';
+const extraControls2 = isMarker2 ? `
+    <select onchange="
+        const ic=this.value;
+        layer.feature.properties.icon=ic;
+        layer.setIcon(L.divIcon({html:'<div style=font-size:24px>'+ic+'</div>',className:'icon',iconSize:[30,30]}));
+    ">${document.getElementById('marker-icon').innerHTML}</select>
+` : `
+    <input type="color" value="${layer.feature.properties.color||'#00ff00'}" oninput="
+        layer.feature.properties.color=this.value;
+        layer.setStyle({color:this.value,fillColor:this.value});
+    ">
+`;
+layer.bindPopup(`<div>
+    <b id="lbl-${sid2}">${label}</b><br>
+    <button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid2}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button>
+    ${extraControls2}
+</div>`);}
           
         }
 
@@ -332,8 +382,24 @@ async function loadFromCloud() {
                 const label = feature.properties.name || 'Site';
                 
                 const sid = L.stamp(layer);
-                const popupContent = `<div><b id="lbl-${sid}">${label}</b><br><button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button></div>`;
-                layer.bindPopup(popupContent);
+const isMarker = !!feature.properties.icon;
+const extraControls = isMarker ? `
+    <select onchange="
+        const ic=this.value;
+        layer.feature.properties.icon=ic;
+        layer.setIcon(L.divIcon({html:'<div style=font-size:24px>'+ic+'</div>',className:'icon',iconSize:[30,30]}));
+    ">${document.getElementById('marker-icon').innerHTML}</select>
+` : `
+    <input type="color" value="${feature.properties.color||'#00ff00'}" oninput="
+        layer.feature.properties.color=this.value;
+        layer.setStyle({color:this.value,fillColor:this.value});
+    ">
+`;
+const popupContent = `<div>
+    <b id="lbl-${sid}">${label}</b><br>
+    <button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button>
+    ${extraControls}
+</div>`;                layer.bindPopup(popupContent);
                 if (feature.properties.icon && layer.setIcon) {
                     layer.setIcon(L.divIcon({
                         html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
