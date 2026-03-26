@@ -155,12 +155,13 @@
 
         // 3. THE EXTRAS: Drawing Tools
         drawnItems = new L.FeatureGroup().addTo(map);
-        L.Draw.Polyline.prototype._finishShape = function() {
+       L.Draw.Polyline.prototype._finishShape = function() {
     if (this._markers.length < 2) return;
     const latlngs = this._markers.map(m => m.getLatLng());
+    const isPolygon = this instanceof L.Draw.Polygon;
     this._map.fire(L.Draw.Event.CREATED, {
-        layer: new L.Polyline(latlngs),
-        layerType: 'polyline'
+        layer: isPolygon ? new L.Polygon(latlngs) : new L.Polyline(latlngs),
+        layerType: isPolygon ? 'polygon' : 'polyline'
     });
     this.disable();
 };
