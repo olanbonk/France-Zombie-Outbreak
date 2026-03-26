@@ -6,9 +6,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style><div class="tool-box admin-only">
-    <h3>1. Geometry Config</h3>
-    <label>Active Color:</label>
+    <style>
     <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
         <div id="color-preview" style="width:36px;height:36px;background:#ff0000;border:2px solid #0f0;cursor:pointer;flex-shrink:0;" onclick="togglePicker()"></div>
         <input id="hex-input" type="text" value="#ff0000" maxlength="7"
@@ -62,22 +60,26 @@
 <div id="resizer"></div> 
 <div class="dashboard" id="dashboard">
     <div class="tool-box admin-only">
-        <h3>1. Geometry Config</h3>
-        <label>Polygon Zone Type:</label>
-        <select id="zone-style">
-            <option value="black">Ruin (Black)</option>
-            <option value="purple">Infected (Purple)</option>
-            <option value="yellow">Quarantine (Yellow)</option>
-            <option value="green">Safe Zone (Green)</option>
-        </select>
-        <label>Line/Route Style:</label>
-        <select id="route-style">
-            <option value="cyan">Supply Route (Cyan)</option>
-            <option value="red">Frontline (Red)</option>
-            <option value="white">Civic Path (White)</option>
-        </select>
+    <h3>1. Geometry Config</h3>
+    <label>Active Color:</label>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+        <div id="color-preview" onclick="togglePicker()" style="width:36px;height:36px;background:#ff0000;border:2px solid #0f0;cursor:pointer;flex-shrink:0;"></div>
+        <input id="hex-input" type="text" value="#ff0000" maxlength="7"
+            style="background:#000;color:#0f0;border:1px solid #0f0;padding:4px;width:70px;font-family:'Courier New',monospace;font-size:0.85em;"
+            oninput="onHexType(this.value)">
+        <button id="eyedropper-btn" title="Pick color from screen" onclick="launchEyedropper()" style="font-size:1.1em;padding:4px 7px;">🔬</button>
     </div>
-
+    <div id="picker-panel" style="display:none;margin-bottom:8px;">
+        <canvas id="color-wheel" width="140" height="140" style="cursor:crosshair;display:block;"></canvas>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span style="font-size:0.75em;">L:</span>
+            <input id="lightness-slider" type="range" min="0" max="100" value="50"
+                style="flex:1;accent-color:#0f0;" oninput="onLightnessChange(this.value)">
+        </div>
+    </div>
+    <div style="font-size:0.75em;margin-bottom:4px;">SAVED COLORS: <button onclick="saveCurrentColor()" style="font-size:0.75em;padding:2px 5px;">+ SAVE</button></div>
+    <div id="saved-swatches" style="display:flex;flex-wrap:wrap;gap:3px;min-height:22px;margin-bottom:6px;"></div>
+</div>
     <div class="tool-box admin-only">
         <h3>2. Intel Markers</h3>
         <label>Active Unit/Site:</label>
