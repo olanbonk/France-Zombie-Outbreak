@@ -122,10 +122,20 @@
 
         // 3. THE EXTRAS: Drawing Tools
         drawnItems = new L.FeatureGroup().addTo(map);
-        const drawControl = new L.Control.Draw({
-            edit: { featureGroup: drawnItems },
-            draw: { circle: false, circlemarker: false, rectangle: true }
-        });
+       const drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: { 
+        circle: false, 
+        circlemarker: false, 
+        rectangle: true,
+        polygon: {
+            finishOn: null
+        },
+        polyline: {
+            finishOn: null
+        }
+    }
+});
 
         // 4. BOTTOM BUN: The Cloud Auto-Loader
         setTimeout(() => { 
