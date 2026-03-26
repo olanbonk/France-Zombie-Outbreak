@@ -401,16 +401,7 @@ async function loadFromCloud() {
                 
                 const sid = L.stamp(layer);
 
-        const ic=this.value;
-        layer.feature.properties.icon=ic;
-        layer.setIcon(L.divIcon({html:'<div style=font-size:24px>'+ic+'</div>',className:'icon',iconSize:[30,30]}));
-    ">${document.getElementById('marker-icon').innerHTML}</select>
-` : `
-    <input type="color" value="${feature.properties.color||'#00ff00'}" oninput="
-        layer.feature.properties.color=this.value;
-        layer.setStyle({color:this.value,fillColor:this.value});
-    ">
-`;
+
 const isMarker = !!feature.properties.icon;
 if (isMarker) {
     layer.bindPopup(() => {
