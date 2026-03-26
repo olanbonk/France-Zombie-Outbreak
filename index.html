@@ -122,6 +122,15 @@
 
         // 3. THE EXTRAS: Drawing Tools
         drawnItems = new L.FeatureGroup().addTo(map);
+        L.Draw.Polyline.prototype._finishShape = function() {
+    if (this._markers.length < 2) return;
+    const latlngs = this._markers.map(m => m.getLatLng());
+    this._map.fire(L.Draw.Event.CREATED, {
+        layer: new L.Polyline(latlngs),
+        layerType: 'polyline'
+    });
+    this.disable();
+};
        const drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
     draw: { 
