@@ -261,24 +261,42 @@ const color = window.selectedMapColor || '#ff0000';
         layer.setStyle({color: color, fillColor: color, fillOpacity: 0.4, weight: (type === 'polyline' ? 6 : 2)});
     }
 const sid2 = L.stamp(layer);
-const isMarker2 = type === 'marker';
-const extraControls2 = isMarker2 ? `
-    <select onchange="
-        const ic=this.value;
-        layer.feature.properties.icon=ic;
-        layer.setIcon(L.divIcon({html:'<div style=font-size:24px>'+ic+'</div>',className:'icon',iconSize:[30,30]}));
-    ">${document.getElementById('marker-icon').innerHTML}</select>
-` : `
-    <input type="color" value="${layer.feature.properties.color||'#00ff00'}" oninput="
-        layer.feature.properties.color=this.value;
-        layer.setStyle({color:this.value,fillColor:this.value});
-    ">
-`;
-layer.bindPopup(`<div>
-    <b id="lbl-${sid2}">${label}</b><br>
-    <button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid2}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button>
-    ${extraControls2}
-</div>`);}
+if (type === 'marker') {
+    layer.bindPopup(() => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b id="lbl-${sid2}">${label}</b><br>
+            <button id="ren-${sid2}">RENAME</button><br>
+            <select id="ico-${sid2}">${document.getElementById('marker-icon').innerHTML}</select>`;
+        div.querySelector('#ren-'+sid2).onclick = () => {
+            const n = prompt('New Name:');
+            if (n) { layer.feature.properties.name = n; document.getElementById('lbl-'+sid2).innerText = n; }
+        };
+        const sel = div.querySelector('#ico-'+sid2);
+        sel.value = layer.feature.properties.icon || '📍';
+        sel.onchange = () => {
+            layer.feature.properties.icon = sel.value;
+            layer.setIcon(L.divIcon({html:`<div style="font-size:24px">${sel.value}</div>`,className:'icon',iconSize:[30,30]}));
+        };
+        return div;
+    });
+} else {
+    layer.bindPopup(() => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b id="lbl-${sid2}">${label}</b><br>
+            <button id="ren-${sid2}">RENAME</button><br>
+            <input type="color" id="col-${sid2}" value="${layer.feature.properties.color||'#00ff00'}">`;
+        div.querySelector('#ren-'+sid2).onclick = () => {
+            const n = prompt('New Name:');
+            if (n) { layer.feature.properties.name = n; document.getElementById('lbl-'+sid2).innerText = n; }
+        };
+        const col = div.querySelector('#col-'+sid2);
+        col.oninput = () => {
+            layer.feature.properties.color = col.value;
+            layer.setStyle({color: col.value, fillColor: col.value});
+        };
+        return div;
+    });
+}}
           
         }
 
@@ -395,11 +413,43 @@ const extraControls = isMarker ? `
         layer.setStyle({color:this.value,fillColor:this.value});
     ">
 `;
-const popupContent = `<div>
-    <b id="lbl-${sid}">${label}</b><br>
-    <button onclick="const n=prompt('New Name:'); if(n){ const old=layer.feature.properties.name; layer.feature.properties.name=n; document.getElementById('lbl-${sid}').innerText=n; pushUndo({type:'rename',layer,oldName:old,newName:n}); }">RENAME</button>
-    ${extraControls}
-</div>`;                layer.bindPopup(popupContent);
+const isMarker = !!feature.properties.icon;
+if (isMarker) {
+    layer.bindPopup(() => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b id="lbl-${sid}">${label}</b><br>
+            <button id="ren-${sid}">RENAME</button><br>
+            <select id="ico-${sid}">${document.getElementById('marker-icon').innerHTML}</select>`;
+        div.querySelector('#ren-'+sid).onclick = () => {
+            const n = prompt('New Name:');
+            if (n) { layer.feature.properties.name = n; document.getElementById('lbl-'+sid).innerText = n; }
+        };
+        const sel = div.querySelector('#ico-'+sid);
+        sel.value = layer.feature.properties.icon || '📍';
+        sel.onchange = () => {
+            layer.feature.properties.icon = sel.value;
+            layer.setIcon(L.divIcon({html:`<div style="font-size:24px">${sel.value}</div>`,className:'icon',iconSize:[30,30]}));
+        };
+        return div;
+    });
+} else {
+    layer.bindPopup(() => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b id="lbl-${sid}">${label}</b><br>
+            <button id="ren-${sid}">RENAME</button><br>
+            <input type="color" id="col-${sid}" value="${layer.feature.properties.color||'#00ff00'}">`;
+        div.querySelector('#ren-'+sid).onclick = () => {
+            const n = prompt('New Name:');
+            if (n) { layer.feature.properties.name = n; document.getElementById('lbl-'+sid).innerText = n; }
+        };
+        const col = div.querySelector('#col-'+sid);
+        col.oninput = () => {
+            layer.feature.properties.color = col.value;
+            layer.setStyle({color: col.value, fillColor: col.value});
+        };
+        return div;
+    });
+}
                 if (feature.properties.icon && layer.setIcon) {
                     layer.setIcon(L.divIcon({
                         html: `<div style="font-size:24px;">${feature.properties.icon}</div>`,
