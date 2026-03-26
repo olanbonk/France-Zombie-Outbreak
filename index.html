@@ -401,7 +401,7 @@ const isMarker = !!feature.properties.icon;
 if (isMarker) {
     layer.bindPopup(() => {
         const div = document.createElement('div');
-        div.innerHTML = `<b id="lbl-${sid}">${label}</b><br>
+        div.innerHTML = `<b id="lbl-${sid}">${layer.feature.properties.name}</b><br>
             <button id="ren-${sid}">RENAME</button><br>
             <select id="ico-${sid}">${document.getElementById('marker-icon').innerHTML}</select>`;
         div.querySelector('#ren-'+sid).onclick = () => {
@@ -419,7 +419,7 @@ if (isMarker) {
 } else {
     layer.bindPopup(() => {
         const div = document.createElement('div');
-        div.innerHTML = `<b id="lbl-${sid}">${label}</b><br>
+        div.innerHTML = `<b id="lbl-${sid}">${layer.feature.properties.name}</b><br>
             <button id="ren-${sid}">RENAME</button><br>
             <input type="color" id="col-${sid}" value="${layer.feature.properties.color||'#00ff00'}">`;
         div.querySelector('#ren-'+sid).onclick = () => {
