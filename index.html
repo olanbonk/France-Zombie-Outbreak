@@ -400,9 +400,7 @@ async function loadFromCloud() {
                 const label = feature.properties.name || 'Site';
                 
                 const sid = L.stamp(layer);
-const isMarker = !!feature.properties.icon;
-const extraControls = isMarker ? `
-    <select onchange="
+
         const ic=this.value;
         layer.feature.properties.icon=ic;
         layer.setIcon(L.divIcon({html:'<div style=font-size:24px>'+ic+'</div>',className:'icon',iconSize:[30,30]}));
