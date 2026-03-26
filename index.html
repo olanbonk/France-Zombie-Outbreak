@@ -199,7 +199,8 @@ map.on(L.Draw.Event.CREATED, function (e) {
     if (!isAdmin) return;
     const layer = e.layer;
     layer.addTo(drawnItems);
-    applyApocStyles(layer, e.layerType, "Unnamed Site");
+    const label = prompt("Site Name/Description:") || "Unnamed Site";
+    applyApocStyles(layer, e.layerType, label);
     pushUndo({ type: 'add', layer });
 });
       function applyApocStyles(layer, type, label) {
