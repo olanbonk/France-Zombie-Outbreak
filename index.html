@@ -197,7 +197,7 @@ window.login = async function() {
     const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     // The hash for: pantewhyareyoureadingthis
-    const secureHash = "22265282177b86ba303dfd5efbbec3213ec99b22745fa6c75b720684b533b585";
+    const secureHash = "a0f116cdbd8bfe7e67715fb98fffe8d7f1eccdbff1cf21a7626b2c5f3aa535d8";
 
     if (hashedInput === secureHash) {
         isAdmin = true;
